@@ -16,7 +16,13 @@ Hospital readmissions are an important healthcare quality indicator because freq
 Business Intelligence enables hospital administrators and healthcare executives to analyze historical data, identify trends, monitor key performance indicators (KPIs), and support evidence-based decision-making. By understanding factors that contribute to hospital readmissions, organizations can improve discharge planning, optimize resource allocation, reduce unnecessary costs, and enhance the overall quality of healthcare services.
 
 
-3. Business Problem Statement
+## 3. Business Problem Statement
+
+Hospital networks generate large volumes of operational and clinical data every day. However, without a structured analytical solution, it becomes difficult for decision-makers to identify patterns related to patient readmissions, hospital performance, treatment costs, and resource utilization.
+
+The primary business challenge is to transform raw healthcare data into actionable insights that help hospital administrators understand the factors influencing readmissions, evaluate hospital performance, monitor financial outcomes, and identify opportunities to improve patient care while optimizing operational efficiency.
+
+This project addresses these challenges by providing an interactive Business Intelligence solution that enables stakeholders to monitor key performance indicators, analyze historical trends, compare hospital performance, evaluate patient demographics and diagnoses, and support data-driven decision-making across the healthcare network.
 
 4. Stakeholders
 
