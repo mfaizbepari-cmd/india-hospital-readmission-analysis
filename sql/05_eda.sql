@@ -23,6 +23,20 @@ This script answers key business questions related to:
 ==========================================================
 */
 
+
+
+
+/*
+
+==========================================================
+
+        SECTION 1 — Executive KPI Analysis
+
+==========================================================
+*/
+
+
+
 /* What is the total number of patients? */
 select distinct count(*) as total_patients
 from patients;
@@ -67,6 +81,325 @@ from admissions;
 
 
 
+/* What is the overall 7-day readmission rate? */
+select
+	round(
+			100.0 * sum(case when readmitted_7d = true then 1 else 0 end) / count(*) ,2
+	) as overall_7d_readmitted_rate
+from admissions;
 
 
 
+/*
+
+==========================================================
+
+             SECTION 2 — Patient Analysis
+
+==========================================================
+
+*/
+
+
+/* Which age group has the highest number of admissions? */
+select 
+	 (  case 
+	        when p.age between 0 and 17 then '0 - 17'
+	        when p.age between 18 and 35 then '18 - 35' 
+	        when p.age between 36 and 50 then '36 - 50'
+	        when p.age between 51 and 65 then '51 - 65'
+	        when p.age > 65 then '65+'
+       end
+	  ) as age_group,
+
+	 count(a.admission_id) as total_admissions
+from admissions as a
+join patients as p
+	on a.patient_id = p.patient_id
+
+Group by
+ case 
+	 when p.age between 0 and 17 then '0 - 17'
+	 when p.age between 18 and 35 then '18 - 35' 
+	 when p.age between 36 and 50 then '36 - 50'
+	 when p.age between 51 and 65 then '51 - 65'
+	 when p.age > 65 then '65+'
+end
+order by total_admissions desc
+limit 1
+;
+			 
+
+/* Which age group has the highest readmission rate? */
+
+select 
+     case 
+	     when p.age between 0 and 17 then '0 - 17'
+	     when p.age between 18 and 35 then '18 - 35' 
+	     when p.age between 36 and 50 then '36 - 50'
+	     when p.age between 51 and 65 then '51 - 65'
+	     when p.age > 65 then '65+'
+    end as age_group,
+   Round(
+			100.0 * sum(case when a.readmitted_30d = True then 1 else 0 end) / count(*),2
+   ) as readmitted_rate	
+
+from patients as p
+join admissions as a
+	on p.patient_id = a.patient_id
+group by
+		     case 
+	     when p.age between 0 and 17 then '0 - 17'
+	     when p.age between 18 and 35 then '18 - 35' 
+	     when p.age between 36 and 50 then '36 - 50'
+	     when p.age between 51 and 65 then '51 - 65'
+	     when p.age > 65 then '65+'
+    end
+
+order by readmitted_rate desc
+limit 1;
+
+
+
+/* Does gender influence readmission rates? */
+select 
+		gender,
+	    round(
+			   100.0 * sum(case when readmitted_30d = true then 1 else 0 end ) / count(*)  ,2
+		      ) as readmitted_rate
+from admissions as a
+join patients as p
+	on a.patient_id = p.patient_id
+group by gender
+order by readmitted_rate desc;
+
+
+
+/* Which insurance type has the most admissions? */
+select p.insurance_type,
+	count(a.admission_id) as total_admissions
+from admissions as a
+join patients as p
+	on a.patient_id = p.patient_id
+group by p.insurance_type
+order by total_admissions desc
+limit 1;
+
+
+/* Which insurance type has the highest average treatment cost? */
+select p.insurance_type,
+		round(avg(b.total_cost_inr),2) as average_cost
+FROM patients p
+JOIN admissions a
+    ON p.patient_id = a.patient_id
+JOIN bills b
+    ON a.admission_id = b.admission_id
+group by p.insurance_type
+order by average_cost desc
+limit 1;
+
+
+/* Which insurance type has the highest readmission rate? */
+select p.insurance_type,
+		round(
+			   100.0 * sum(case when a.readmitted_30d = true then 1 else 0 end) / count(*) ,2
+		      ) as readmitted_rate
+
+from patients as p
+join admissions a
+	on p.patient_id = a.patient_id
+group by p.insurance_type
+order by readmitted_rate desc
+limit 1;
+
+
+
+/* Which states contribute the most patients? */
+select state,
+		count(patient_id) as total_patients,
+	    round(
+			100.0 * count(patient_id) / (select count(patient_id) from patients) ,2
+		) as contribution_percentage
+from patients
+group by state
+order by contribution_percentage desc
+limit 5;
+
+
+/* Which patients have the highest number of admissions? */
+select patient_id ,
+		count(admission_id) as total_admissions
+from admissions
+group by patient_id 
+order by total_admissions desc;
+
+
+
+/*
+
+==========================================================
+
+            SECTION 3 — Hospital Analysis
+
+==========================================================
+
+*/
+
+
+
+
+/* Which hospitals treat the highest number of patients? */
+select h.hospital_id ,
+		h.name,
+		COUNT(DISTINCT a.patient_id) as total_patients
+from hospitals as h
+join admissions a
+	on h.hospital_id = a.hospital_id
+group by h.hospital_id ,h.name
+order by total_patients desc
+limit 10;
+
+
+/* Which hospitals have the highest readmission rate? */
+select h.hospital_id,
+		h.name,
+		round(
+              100.0 * sum(case when a.readmitted_30d = true then 1 else 0 end) / count(*) ,2
+		) as readmission_rate
+from hospitals h
+join admissions a
+	on a.hospital_id = h.hospital_id
+group by h.hospital_id,h.name
+order by readmission_rate desc 
+limit 10;
+
+
+/* Which hospitals generate the highest revenue? */
+select h.hospital_id ,
+		h.name,
+		round(sum(b.total_cost_inr),2) as total_revenue
+from hospitals h
+join admissions a
+	on h.hospital_id = a.hospital_id
+join bills b
+	on a.admission_id = b.admission_id
+group by h.hospital_id, h.name
+order by total_revenue desc
+limit 1;
+
+
+/* Which hospital tiers have the highest readmission rate? */
+select h.tier,
+		round(
+				100.0 * sum(case when a.readmitted_30d = true then 1 else 0 end) / count(*) , 2
+		) as readmittion_rate
+
+from hospitals h
+join admissions a
+	on a.hospital_id = h.hospital_id
+group by h.tier
+order by readmittion_rate desc;
+
+
+/* Which states have the highest number of hospital admissions? */
+select state,
+		count(admission_id) as total_admissions
+from hospitals h
+join admissions a
+	on h.hospital_id = a.hospital_id
+group by state
+order by total_admissions desc
+limit 10;
+
+
+/* Which hospitals have the longest average patient stay? */
+select h.hospital_id,
+		h.name,
+		round(avg(los_days),2) average_los
+from hospitals h
+join admissions a
+	on h.hospital_id = a.hospital_id
+group by h.hospital_id,h.name
+order by average_los desc
+limit 10;
+
+
+/* Which teaching hospitals have better readmission performance? */
+select h.teaching,
+		round(  100.0 * sum(case when readmitted_30d = true then 1 else 0 end) / count(*),2) as readmission_rate
+from hospitals h
+join admissions a
+	on h.hospital_id = a.hospital_id
+group by h.teaching
+order by readmission_rate asc
+;
+
+
+
+/* 
+
+==========================================================
+
+         SECTION 4 — Diagnosis Analysis
+
+==========================================================
+
+*/
+
+
+
+
+
+/* Which diagnoses are most common? */
+select d.diag_desc,
+		count(admission_id) as total_admissions		
+from diagnoses d
+group by diag_desc
+order by total_admissions desc
+limit 10;
+
+
+/* Which diagnosis categories occur most frequently? */
+select diag_category,
+		count(admission_id) total_admission
+from diagnoses
+group by diag_category
+order by total_admission desc
+limit 10 ;
+
+
+/*Which diagnoses have the highest readmission rate? */
+select d.diag_desc,
+		round(
+				100.0 * sum(case when a.readmitted_30d = true then 1 else 0 end) / count(*) ,2
+		) as readmission_rate
+from diagnoses d
+join admissions a
+	on a.admission_id = d.admission_id
+group by diag_desc
+order by readmission_rate desc
+limit 10;
+
+
+
+/* Which diagnosis categories generate the highest healthcare cost? */
+select d.diag_category,
+		round(sum(b.total_cost_inr),2) total_cost
+from diagnoses d
+join bills b
+	on b.admission_id = d.admission_id
+group by diag_category 
+order by total_cost desc
+limit 10;
+
+
+/* Which diagnoses require the longest hospital stay? */
+select diag_desc,
+		round(avg(los_days),2) as average_los
+from diagnoses d
+join admissions a
+	on d.admission_id = a.admission_id
+group by diag_desc
+order by average_los desc
+limit 1;
+		
