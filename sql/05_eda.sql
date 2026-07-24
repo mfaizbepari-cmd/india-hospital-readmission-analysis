@@ -402,4 +402,167 @@ join admissions a
 group by diag_desc
 order by average_los desc
 limit 1;
+
+
+
+/* 
+
+==========================================================
+
+         SECTION 5 — Financial Analysis
+
+==========================================================
+*/
+
+
+/* Which hospitals generate the highest treatment revenue? */
+select h.hospital_id,
+		h.name,
+		round(sum(b.total_cost_inr),2) as total_revenue
+from hospitals h
+join admissions a
+	on h.hospital_id = a.hospital_id
+join bills b
+	on b.admission_id = a.admission_id
+group by h.hospital_id , h.name
+order by total_revenue desc
+limit 10;
+
+
+
+
+/* What is the average treatment cost by hospital tier? */
+select h.tier,
+		round(avg(b.total_cost_inr),2) as average_cost
+from hospitals h
+join admissions a
+	on h.hospital_id = a.hospital_id
+join bills b
+	on a.admission_id = b.admission_id
+group by tier
+order by average_cost desc;
+
+
+/* Which cost categories account for the highest expenditure? */
+select cost_category,
+		round(sum(total_cost_inr),2) as total_expenditure
+from bills 
+group by cost_category
+order by total_expenditure desc;
+
+
+/* Which insurance type receives the highest government subsidy? */
+select insurance_type ,
+		round(sum(govt_subsidy_inr),2) as total_subsidy
+from patients p
+join admissions a
+	on a.patient_id = p.patient_id
+join bills b
+	on b.admission_id = a.admission_id
+group by insurance_type
+order by total_subsidy desc
+limit 1;
+
+/* Which states receive the highest total healthcare subsidy? */
+select h.state,
+		round(sum(b.govt_subsidy_inr)) as total_subsidy
+from hospitals h
+join admissions a
+	on h.hospital_id = a.hospital_id
+join bills b
+	on a.admission_id = b.admission_id
+group by h.state
+order by total_subsidy desc 
+limit 10;
+
+
+
+/* Which admissions have the highest treatment cost? */
+select admit_type,
+		round(sum(b.total_cost_inr),2) as total_cost
+from admissions a
+join bills b
+	on a.admission_id = b.admission_id
+group by a.admit_type
+order by total_cost desc;
+
+
+
+/* 
+==========================================================
+
+         SECTION 6 — Readmission Analysis
+
+==========================================================
+*/
+
+
+
+		
+/* Does Charlson Index influence readmission? */
+select charlson_index,
+		round(
+				100.0 * sum(case when readmitted_30d = true then 1 else 0 end) / count(*) ,2
+		) as readmission_rate
+from admissions
+group by charlson_index
+order by charlson_index desc;
+
+
+/* Does the number of procedures affect readmission? */
+select num_procedures,
+		round(
+				100.0 * sum(case when readmitted_30d = true then 1 else 0 end) / count(*),2
+		) as readmission_rate
+from admissions
+group by num_procedures
+order by num_procedures desc
+limit 10;
+
+
+/* Does longer hospital stay reduce or increase readmission? */
+select los_days,
+		round(
+				100.0 * sum(case when readmitted_30d = true then 1 else 0 end) / count(*) ,2
+		) as readmission_rate
+from admissions
+group by los_days
+order by los_days;
+
+
+/* Which ward types have the highest readmission rate? */
+select ward_type,
+		round(
+				100.0 * sum(case when readmitted_30d = true then 1 else 0 end) / count(*) ,2
+		) readmission_rate
+from admissions
+group by ward_type
+order by readmission_rate desc;
+
+
+/* Which admission types have the highest readmission rate? */
+select admit_type,
+		round(
+				100.0 * sum(case when readmitted_30d = true then 1 else 0 end) / count(*) ,2
+		) readmission_rate
+from admissions
+group by  admit_type
+order by readmission_rate desc;
+
+
+/* Which discharge types are associated with higher readmission? */
+select  discharge_type,
+		round(
+				100.0 * sum(case when readmitted_30d = true then 1 else 0 end ) / count(*),2
+		) readmission_rate
+from admissions
+group by discharge_type 
+order by readmission_rate desc;
+
+
+
+
+
+
+
 		
