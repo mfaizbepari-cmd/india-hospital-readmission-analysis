@@ -1,4 +1,19 @@
+/*
+=========================================
+Data Cleaning & Data Quality Validation
+Project: India Hospital Readmission Analytics
 
+Checks Performed:
+✔ NULL Validation
+✔ Duplicate Record Detection
+✔ Referential Integrity Validation
+✔ Logical Data Validation
+✔ Domain / Category Validation
+✔ Medical Value Validation
+✔ Business Duplicate Validation
+✔ Outlier Detection
+=========================================
+*/
 /* Checking Null Value in admissions table */
 select *
 from admissions
@@ -379,7 +394,8 @@ select hospital_id,
 from admissions
 group by hospital_id
 having 100.0 * sum(case when readmitted_30d = True then 1 else 0 end)
-				/ count(*) > 10;
+				/ count(*) > 10
+ORDER BY readmission_rate DESC;
 
 
 
